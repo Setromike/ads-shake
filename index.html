@@ -1,0 +1,198 @@
+<!DOCTYPE html><html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shake İçki Oyunu</title>
+  <style>
+    body {
+      margin: 0;
+      background: url('https://i.postimg.cc/DZTBLf46/barlesieur-51-1.jpg') no-repeat center center fixed;
+      background-size: cover;
+      font-family: sans-serif;
+      color: #fff;
+      text-align: center;
+    }
+    #shaker {
+      width: 120px;
+      height: 240px;
+      margin: 100px auto 20px;
+      background: url('https://i.postimg.cc/zDLFvRQN/1751630764334.png') no-repeat center;
+      background-size: contain;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    #shaker.shake {
+      animation: shake 0.3s linear infinite;
+    }
+    @keyframes shake {
+      0% { transform: translate(2px, 2px); }
+      25% { transform: translate(-2px, -2px); }
+      50% { transform: translate(2px, -2px); }
+      75% { transform: translate(-2px, 2px); }
+      100% { transform: translate(2px, 2px); }
+    }
+    #progress {
+      width: 80%;
+      height: 20px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+      margin: 20px auto;
+      overflow: hidden;
+    }
+    #progressBar {
+      width: 0%;
+      height: 100%;
+      background: #ffd700;
+      transition: width 0.3s ease;
+    }
+    #drinkDisplay img {
+      width: 120px;
+    }
+    #drinkDisplay {
+      display: none;
+      font-size: 24px;
+      margin-top: 20px;
+      background: rgba(0,0,0,0.6);
+      padding: 20px;
+      border-radius: 12px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      background: #fff;
+      color: #000;
+      cursor: pointer;
+    }
+    #shelf {
+      display: none;
+      margin-top: 30px;
+      background: rgba(255,255,255,0.1);
+      padding: 10px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="shaker"></div>
+  <div id="progress">
+    <div id="progressBar"></div>
+  </div>
+  <div id="drinkDisplay"></div>
+  <button id="rafBtn">Rəf</button>
+  <button id="okBtn" style="display:none">Tamam</button>
+  <button id="balansBtn">Balans</button>  <div id="shelf">
+    <h3>Sənin içkilərin:</h3>
+    <ul id="drinkList"></ul>
+  </div>  <script>
+    const shaker = document.getElementById('shaker');
+    const progressBar = document.getElementById('progressBar');
+    const drinkDisplay = document.getElementById('drinkDisplay');
+    const okBtn = document.getElementById('okBtn');
+    const shelf = document.getElementById('shelf');
+    const drinkList = document.getElementById('drinkList');
+    const rafBtn = document.getElementById('rafBtn');
+    const balansBtn = document.getElementById('balansBtn');
+
+    let progress = 0;
+    let drinks = JSON.parse(localStorage.getItem("drinks") || "[]");
+    let ton = parseFloat(localStorage.getItem("ton") || "0");
+    let shakeCount = parseInt(localStorage.getItem("shakes") || "100");
+
+    const drinkTypes = [
+      { name: "Rum", img: "https://i.postimg.cc/vTLBThFX/1751630934178.png", price: 0.2 },
+      { name: "Tequila", img: "https://i.postimg.cc/zGfBDTdS/1751631002805.png", price: 0.15 },
+      { name: "Mojito", img: "https://i.postimg.cc/FR0FCpRm/CZ-Batch-7-Cocktail-Card-1000x1000-Mojito-Static-1-png.webp", price: 0.12 },
+      { name: "Vodka", img: "https://i.postimg.cc/6pS99g4t/1751631140331.png", price: 0.1 },
+      { name: "Whiskey", img: "https://i.postimg.cc/zBw5FftG/1751631202396.png", price: 0.3 },
+      { name: "Martini", img: "https://i.postimg.cc/RVpmRyRK/1751631267626.png", price: 0.25 }
+    ];
+
+    function saveState() {
+      localStorage.setItem("drinks", JSON.stringify(drinks));
+      localStorage.setItem("ton", ton.toFixed(4));
+      localStorage.setItem("shakes", shakeCount);
+    }
+
+    shaker.addEventListener('click', () => {
+      if (progress >= 100 || shakeCount <= 0) return;
+
+      shaker.classList.add('shake');
+      setTimeout(() => shaker.classList.remove('shake'), 300);
+
+      progress = Math.min(progress + 10, 100);
+      progressBar.style.width = progress + '%';
+
+      if (progress === 100) {
+        shakeCount--;
+        const drink = drinkTypes[Math.floor(Math.random() * drinkTypes.length)];
+        drinks.push(drink);
+        saveState();
+        drinkDisplay.innerHTML = `<p>${drink.name}</p><img src="${drink.img}">`;
+        drinkDisplay.style.display = 'block';
+        okBtn.style.display = 'inline-block';
+      }
+    });
+
+    okBtn.addEventListener('click', () => {
+      progress = 0;
+      progressBar.style.width = '0%';
+      drinkDisplay.style.display = 'none';
+      okBtn.style.display = 'none';
+    });
+
+    rafBtn.addEventListener('click', () => {
+      shelf.style.display = shelf.style.display === 'none' ? 'block' : 'none';
+      drinkList.innerHTML = drinks.map((d, i) =>
+        `<li>${d.name} - ${d.price} TON <button onclick="sellDrink(${i})">Sat</button></li>`
+      ).join('');
+    });
+
+    function sellDrink(index) {
+      ton += drinks[index].price;
+      drinks.splice(index, 1);
+      saveState();
+      rafBtn.click(); // refresh
+    }
+
+    balansBtn.addEventListener('click', () => {
+      const popup = document.createElement('div');
+      popup.style.position = 'fixed';
+      popup.style.top = 0;
+      popup.style.left = 0;
+      popup.style.width = '100%';
+      popup.style.height = '100%';
+      popup.style.background = 'rgba(255, 223, 0, 0.95)';
+      popup.style.display = 'flex';
+      popup.style.flexDirection = 'column';
+      popup.style.justifyContent = 'center';
+      popup.style.alignItems = 'center';
+      popup.innerHTML = `
+        <h2 style="color:black">Balans: ${ton.toFixed(4)} TON</h2>
+        <p style="color:black">Minimum çıxarış 1 TON</p>
+        <button id="withdrawBtn">Çıxarış Et</button>
+        <button onclick="this.parentElement.remove()">Bağla</button>
+      `;
+      document.body.appendChild(popup);
+
+      document.getElementById('withdrawBtn').addEventListener('click', () => {
+        if (ton < 1) {
+          alert("Balansda kifayət qədər TON yoxdur!");
+        } else {
+          alert("Çıxarış üçün bu şəxsə yazın: @Mansio44");
+          ton = 0;
+          saveState();
+          popup.remove();
+        }
+      });
+    });
+
+    // İlk açılışda shake sayı yoxdursa, ver
+    if (!localStorage.getItem("shakes")) {
+      shakeCount = 100;
+      localStorage.setItem("shakes", shakeCount);
+    }
+  </script></body>
+</html>
