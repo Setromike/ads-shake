@@ -2,197 +2,167 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shake İçki Oyunu</title>
+  <title>Sadə Konfet Çarxı</title>
   <style>
     body {
       margin: 0;
-      background: url('https://i.postimg.cc/DZTBLf46/barlesieur-51-1.jpg') no-repeat center center fixed;
+      background: url('https://i.postimg.cc/zXQKcM8H/candy-pastel-color-pattern-design-23-2150627546.jpg') no-repeat center center fixed;
       background-size: cover;
-      font-family: sans-serif;
-      color: #fff;
+      font-family: 'Comic Sans MS', cursive;
       text-align: center;
+      color: #ff69b4;
     }
-    #shaker {
-      width: 120px;
-      height: 240px;
-      margin: 100px auto 20px;
-      background: url('https://i.postimg.cc/zDLFvRQN/1751630764334.png') no-repeat center;
-      background-size: contain;
-      cursor: pointer;
-      transition: transform 0.2s ease;
-    }
-    #shaker.shake {
-      animation: shake 0.3s linear infinite;
-    }
-    @keyframes shake {
-      0% { transform: translate(2px, 2px); }
-      25% { transform: translate(-2px, -2px); }
-      50% { transform: translate(2px, -2px); }
-      75% { transform: translate(-2px, 2px); }
-      100% { transform: translate(2px, 2px); }
-    }
-    #progress {
-      width: 80%;
-      height: 20px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 10px;
-      margin: 20px auto;
-      overflow: hidden;
-    }
-    #progressBar {
-      width: 0%;
-      height: 100%;
-      background: #ffd700;
-      transition: width 0.3s ease;
-    }
-    #drinkDisplay img {
-      width: 120px;
-    }
-    #drinkDisplay {
-      display: none;
-      font-size: 24px;
-      margin-top: 20px;
-      background: rgba(0,0,0,0.6);
-      padding: 20px;
-      border-radius: 12px;
-    }
-    button {
-      padding: 10px 20px;
+    .btn {
+      background: #fff0f5;
+      color: #ff1493;
+      padding: 12px 20px;
+      border-radius: 20px;
+      border: 2px solid #ff69b4;
+      box-shadow: 0 0 10px #ff69b4;
+      font-weight: bold;
       margin: 10px;
-      font-size: 16px;
-      border: none;
-      border-radius: 10px;
-      background: #fff;
-      color: #000;
       cursor: pointer;
     }
-    #shelf {
+    #wheelContainer {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      margin: 20px auto;
+    }
+    #wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      transition: transform 4s ease-out;
+    }
+    #arrow {
+      width: 0;
+      height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-bottom: 40px solid red;
+      position: absolute;
+      top: -40px;
+      left: calc(50% - 20px);
+      z-index: 10;
+    }
+    #withdrawPopup {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,240,245,0.95);
+      border: 2px solid #ff69b4;
+      border-radius: 20px;
+      padding: 20px;
       display: none;
-      margin-top: 30px;
-      background: rgba(255,255,255,0.1);
-      padding: 10px;
-      border-radius: 10px;
+      z-index: 1000;
+    }
+    input[type=text] {
+      padding: 8px;
+      width: 80%;
+      margin: 10px 0;
+    }
+    .wheel-text {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: #000;
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
-  <div id="shaker"></div>
-  <div id="progress">
-    <div id="progressBar"></div>
+  <h2>Sadə Konfet Çarxı</h2>
+  <div id="wheelContainer">
+    <div id="arrow"></div>
+    <canvas id="wheel" width="300" height="300"></canvas>
   </div>
-  <div id="drinkDisplay"></div>
-  <button id="rafBtn">Rəf</button>
-  <button id="okBtn" style="display:none">Tamam</button>
-  <button id="balansBtn">Balans</button>  <div id="shelf">
-    <h3>Sənin içkilərin:</h3>
-    <ul id="drinkList"></ul>
-  </div>  <script>
-    const shaker = document.getElementById('shaker');
-    const progressBar = document.getElementById('progressBar');
-    const drinkDisplay = document.getElementById('drinkDisplay');
-    const okBtn = document.getElementById('okBtn');
-    const shelf = document.getElementById('shelf');
-    const drinkList = document.getElementById('drinkList');
-    const rafBtn = document.getElementById('rafBtn');
-    const balansBtn = document.getElementById('balansBtn');
+  <button class="btn" onclick="showAdAndSpin()">Çarxı Fırlat</button>
+  <button class="btn" onclick="showWithdraw()">Çıxarış</button>
+  <button class="btn" onclick="showBalance()">Balans</button>  <div id="withdrawPopup">
+    <p>Çıxarış üçün yöntəm yazıb göndərin, yoxlanıldıqdan sonra təsdiqlənəcəkdir.</p>
+    <input type="text" id="withdrawMethod" placeholder="Çıxarış yöntəmini yazın" />
+    <br>
+    <button class="btn" onclick="submitWithdraw()">Göndər</button>
+    <button class="btn" onclick="document.getElementById('withdrawPopup').style.display='none'">Bağla</button>
+  </div>  <script src='//libtl.com/sdk.js' data-zone='9532911' data-sdk='show_9532911'></script>  <script>
+    const wheelCanvas = document.getElementById("wheel");
+    const ctx = wheelCanvas.getContext("2d");
+    const prizes = [0.1, 0.0008, 0.0005, 0.03, 0.00000001, 0.04, 0.2];
+    const colors = ["#f9c", "#fc9", "#9cf", "#cfc", "#ccf", "#ffc", "#f99"];
+    const angleStep = (2 * Math.PI) / prizes.length;
 
-    let progress = 0;
-    let drinks = JSON.parse(localStorage.getItem("drinks") || "[]");
-    let ton = parseFloat(localStorage.getItem("ton") || "0");
-    let shakeCount = parseInt(localStorage.getItem("shakes") || "100");
-
-    const drinkTypes = [
-      { name: "Rum", img: "https://i.postimg.cc/vTLBThFX/1751630934178.png", price: 0.2 },
-      { name: "Tequila", img: "https://i.postimg.cc/zGfBDTdS/1751631002805.png", price: 0.15 },
-      { name: "Mojito", img: "https://i.postimg.cc/FR0FCpRm/CZ-Batch-7-Cocktail-Card-1000x1000-Mojito-Static-1-png.webp", price: 0.12 },
-      { name: "Vodka", img: "https://i.postimg.cc/6pS99g4t/1751631140331.png", price: 0.1 },
-      { name: "Whiskey", img: "https://i.postimg.cc/zBw5FftG/1751631202396.png", price: 0.3 },
-      { name: "Martini", img: "https://i.postimg.cc/RVpmRyRK/1751631267626.png", price: 0.25 }
-    ];
-
-    function saveState() {
-      localStorage.setItem("drinks", JSON.stringify(drinks));
-      localStorage.setItem("ton", ton.toFixed(4));
-      localStorage.setItem("shakes", shakeCount);
-    }
-
-    shaker.addEventListener('click', () => {
-      if (progress >= 100 || shakeCount <= 0) return;
-
-      shaker.classList.add('shake');
-      setTimeout(() => shaker.classList.remove('shake'), 300);
-
-      progress = Math.min(progress + 10, 100);
-      progressBar.style.width = progress + '%';
-
-      if (progress === 100) {
-        shakeCount--;
-        const drink = drinkTypes[Math.floor(Math.random() * drinkTypes.length)];
-        drinks.push(drink);
-        saveState();
-        drinkDisplay.innerHTML = `<p>${drink.name}</p><img src="${drink.img}">`;
-        drinkDisplay.style.display = 'block';
-        okBtn.style.display = 'inline-block';
+    function drawWheel() {
+      for (let i = 0; i < prizes.length; i++) {
+        ctx.beginPath();
+        ctx.moveTo(150, 150);
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.arc(150, 150, 150, i * angleStep, (i + 1) * angleStep);
+        ctx.fill();
+        ctx.save();
+        ctx.translate(150, 150);
+        ctx.rotate(i * angleStep + angleStep / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#000";
+        ctx.font = "bold 14px Arial";
+        ctx.fillText(`${prizes[i]} AZN`, 140, 5);
+        ctx.restore();
       }
-    });
+    }
+    drawWheel();
 
-    okBtn.addEventListener('click', () => {
-      progress = 0;
-      progressBar.style.width = '0%';
-      drinkDisplay.style.display = 'none';
-      okBtn.style.display = 'none';
-    });
+    let balance = parseFloat(localStorage.getItem('balance') || '0');
 
-    rafBtn.addEventListener('click', () => {
-      shelf.style.display = shelf.style.display === 'none' ? 'block' : 'none';
-      drinkList.innerHTML = drinks.map((d, i) =>
-        `<li>${d.name} - ${d.price} TON <button onclick="sellDrink(${i})">Sat</button></li>`
-      ).join('');
-    });
-
-    function sellDrink(index) {
-      ton += drinks[index].price;
-      drinks.splice(index, 1);
-      saveState();
-      rafBtn.click(); // refresh
+    function showAdAndSpin() {
+      show_9532911().then(() => {
+        spinWheel();
+      });
     }
 
-    balansBtn.addEventListener('click', () => {
-      const popup = document.createElement('div');
-      popup.style.position = 'fixed';
-      popup.style.top = 0;
-      popup.style.left = 0;
-      popup.style.width = '100%';
-      popup.style.height = '100%';
-      popup.style.background = 'rgba(255, 223, 0, 0.95)';
-      popup.style.display = 'flex';
-      popup.style.flexDirection = 'column';
-      popup.style.justifyContent = 'center';
-      popup.style.alignItems = 'center';
-      popup.innerHTML = `
-        <h2 style="color:black">Balans: ${ton.toFixed(4)} TON</h2>
-        <p style="color:black">Minimum çıxarış 1 TON</p>
-        <button id="withdrawBtn">Çıxarış Et</button>
-        <button onclick="this.parentElement.remove()">Bağla</button>
-      `;
-      document.body.appendChild(popup);
+    function spinWheel() {
+      const wheel = document.getElementById("wheel");
+      const index = Math.floor(Math.random() * prizes.length);
+      const angle = 360 * 5 + (360 / prizes.length) * index;
+      wheel.style.transition = "transform 4s ease-out";
+      wheel.style.transform = `rotate(${angle}deg)`;
 
-      document.getElementById('withdrawBtn').addEventListener('click', () => {
-        if (ton < 1) {
-          alert("Balansda kifayət qədər TON yoxdur!");
-        } else {
-          alert("Çıxarış üçün bu şəxsə yazın: @Mansio44");
-          ton = 0;
-          saveState();
-          popup.remove();
-        }
-      });
-    });
+      setTimeout(() => {
+        const reward = prizes[index];
+        balance += reward;
+        localStorage.setItem('balance', balance);
+        alert(`${reward.toFixed(6)} AZN qazandınız!`);
+      }, 4000);
+    }
 
-    // İlk açılışda shake sayı yoxdursa, ver
-    if (!localStorage.getItem("shakes")) {
-      shakeCount = 100;
-      localStorage.setItem("shakes", shakeCount);
+    function showWithdraw() {
+      if (balance < 3) return alert("Minimum çıxarış məbləği 3 AZN-dir.");
+      document.getElementById("withdrawPopup").style.display = "block";
+    }
+
+    function submitWithdraw() {
+      const method = document.getElementById("withdrawMethod").value;
+      if (!method) return alert("Zəhmət olmasa çıxarış yöntəmini daxil edin.");
+
+      const tg = window.Telegram.WebApp.initDataUnsafe?.user;
+      const msg = `✉️ Çıxarış sorğusu:%0AAd: ${tg?.first_name || 'Naməlum'}%0AID: ${tg?.id || 'Naməlum'}%0AYöntəm: ${method}%0AMəbləğ: ${balance.toFixed(2)} AZN`;
+
+      fetch(`https://api.telegram.org/bot8133472449:AAHtl4g78JW2Jx5uw3Pxgn5TCXdVQTO9lMI/sendMessage?chat_id=8197921729&text=${msg}`)
+        .then(res => res.json())
+        .then(() => {
+          alert("Çıxarış göndərildi!");
+          balance = 0;
+          localStorage.setItem('balance', '0');
+          document.getElementById("withdrawPopup").style.display = "none";
+        });
+    }
+
+    function showBalance() {
+      alert(`Balans: ${balance.toFixed(5)} AZN`);
     }
   </script></body>
 </html>
