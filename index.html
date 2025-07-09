@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sadə Konfet Çarxı</title>
+  <title>Konfet Çarxı</title>
   <style>
     body {
       margin: 0;
@@ -36,6 +36,22 @@
       border-radius: 50%;
       transition: transform 4s ease-out;
     }
+    #arrow {
+      width: 0;
+      height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-bottom: 40px solid red;
+      position: absolute;
+      top: -40px;
+      left: calc(50% - 20px);
+      z-index: 10;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
     #withdrawPopup {
       position: fixed;
       top: 50%; left: 50%;
@@ -57,14 +73,16 @@
 <body>
   <h2>Sadə Konfet Çarxı</h2>
   <div id="wheelContainer">
+    <div id="arrow"></div>
     <canvas id="wheel" width="300" height="300"></canvas>
   </div>
   <p id="spinCounter">0/50</p>
   <button class="btn" onclick="showAdAndSpin()">Çarxı Fırlat</button>
   <button class="btn" onclick="showWithdraw()">Çıxarış</button>
   <button class="btn" onclick="showBalance()">Balans</button>
+
   <div id="withdrawPopup">
-    <p>Çıxarış üçün yöntəm yazıb göndərin, yoxlanıldıqdan sonra təsdiqlənəcəkdir.</p>
+    <p>Çıxarış üçün yöntəm yazıb göndərin:</p>
     <input type="text" id="withdrawMethod" placeholder="Çıxarış yöntəmini yazın" />
     <br>
     <button class="btn" onclick="submitWithdraw()">GÖNDƏR</button>
@@ -117,7 +135,7 @@
 
     function resetSpinIfNeeded() {
       const now = Date.now();
-      if (now - lastReset > 24 * 60 * 60 * 1000) {
+      if (now - lastReset > 86400000) {
         spinCount = 0;
         lastReset = now;
         localStorage.setItem('spinCount', '0');
@@ -129,7 +147,7 @@
     function showAdAndSpin() {
       resetSpinIfNeeded();
       if (spinCount >= 50) {
-        alert("Günlük limit dolub. Zəhmət olmasa 24 saat sonra yenidən yoxlayın.");
+        alert("Günlük limit dolub. Zəhmət olmasa sabah yenidən yoxlayın.");
         return;
       }
       show_9532911().then(() => {
@@ -146,7 +164,7 @@
       wheelCanvas.style.transform = `rotate(${totalRotation}deg)`;
 
       setTimeout(() => {
-        const finalAngle = (90 - (totalRotation % 360) + 360) % 360; // sağ tərəfdəki sektor
+        const finalAngle = (360 - (totalRotation % 360)) % 360; // arrow ucu yuxarıdan baxır = 0°
         const index = Math.floor(finalAngle / angleStep) % prizes.length;
         const reward = prizes[index];
         balance += reward;
@@ -167,9 +185,8 @@
       const method = document.getElementById("withdrawMethod").value;
       if (!method) return alert("Zəhmət olmasa çıxarış yöntəmini daxil edin.");
       const tg = window.Telegram.WebApp.initDataUnsafe?.user;
-      const msg = `✉️ Çıxarış sorğusu:%0AAd: ${tg?.first_name || 'Naməlum'}%0AID: ${tg?.id || 'Naməlum'}%0AYöntəm: ${method}%0AMəbləğ: ${balance.toFixed(2)} AZN`;
+      const msg = `✉️ Çıxarış:%0A👤 ${tg?.first_name || 'Naməlum'}%0A🆔 ${tg?.id || 'Naməlum'}%0A💳 Yöntəm: ${method}%0A💰 Məbləğ: ${balance.toFixed(2)} AZN`;
       fetch(`https://api.telegram.org/bot8133472449:AAHtl4g78JW2Jx5uw3Pxgn5TCXdVQTO9lMI/sendMessage?chat_id=8197921729&text=${msg}`)
-        .then(res => res.json())
         .then(() => {
           alert("Çıxarış göndərildi!");
           balance = 0;
