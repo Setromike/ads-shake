@@ -141,6 +141,25 @@
         localStorage.setItem('spinCount', '0');
         localStorage.setItem('lastReset', `${now}`);
         updateSpinText();
+      }function spinWheel() {
+  const randomAngle = Math.floor(Math.random() * 360);
+  const fullRotations = 5 * 360;
+  const totalRotation = fullRotations + randomAngle;
+
+  wheelCanvas.style.transition = "transform 4s ease-out";
+  wheelCanvas.style.transform = `rotate(${totalRotation}deg)`;
+
+  setTimeout(() => {
+    const finalAngle = (180 - (totalRotation % 360) + 360) % 360; // ⬅️ Əqrəb ucu aşağıya baxır (180°)
+    const index = Math.floor(finalAngle / angleStep) % prizes.length;
+    const reward = prizes[index];
+    balance += reward;
+    spinCount++;
+    localStorage.setItem('balance', balance);
+    localStorage.setItem('spinCount', spinCount);
+    updateSpinText();
+    alert(`${reward.toFixed(6)} AZN qazandınız!`);
+  }, 4000);
       }
     }
 
@@ -156,25 +175,7 @@
     }
 
     function spinWheel() {
-      const randomAngle = Math.floor(Math.random() * 360);
-      const fullRotations = 5 * 360;
-      const totalRotation = fullRotations + randomAngle;
-
-      wheelCanvas.style.transition = "transform 4s ease-out";
-      wheelCanvas.style.transform = `rotate(${totalRotation}deg)`;
-
-      setTimeout(() => {
-        const finalAngle = (360 - (totalRotation % 360)) % 360; // arrow ucu yuxarıdan baxır = 0°
-        const index = Math.floor(finalAngle / angleStep) % prizes.length;
-        const reward = prizes[index];
-        balance += reward;
-        spinCount++;
-        localStorage.setItem('balance', balance);
-        localStorage.setItem('spinCount', spinCount);
-        updateSpinText();
-        alert(`${reward.toFixed(6)} AZN qazandınız!`);
-      }, 4000);
-    }
+    
 
     function showWithdraw() {
       if (balance < 3.5) return alert("Minimum çıxarış məbləği 3.50 AZN-dir.");
