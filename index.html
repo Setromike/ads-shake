@@ -36,17 +36,6 @@
       border-radius: 50%;
       transition: transform 4s ease-out;
     }
-    #arrow {
-      width: 0;
-      height: 0;
-      border-top: 10px solid transparent;
-      border-bottom: 10px solid transparent;
-      border-left: 30px solid red; /* uc sola baxır */
-      position: absolute;
-      top: calc(50% - 10px);
-      left: 300px; /* sağ tərəfdə */
-      z-index: 10;
-    }
     #withdrawPopup {
       position: fixed;
       top: 50%; left: 50%;
@@ -68,7 +57,6 @@
 <body>
   <h2>Sadə Konfet Çarxı</h2>
   <div id="wheelContainer">
-    <div id="arrow"></div>
     <canvas id="wheel" width="300" height="300"></canvas>
   </div>
   <p id="spinCounter">0/50</p>
@@ -158,8 +146,7 @@
       wheelCanvas.style.transform = `rotate(${totalRotation}deg)`;
 
       setTimeout(() => {
-        // Əqrəb sağda olduğuna görə baxılan bucaq 90°
-        const finalAngle = (90 - (totalRotation % 360) + 360) % 360;
+        const finalAngle = (90 - (totalRotation % 360) + 360) % 360; // sağ tərəfdəki sektor
         const index = Math.floor(finalAngle / angleStep) % prizes.length;
         const reward = prizes[index];
         balance += reward;
