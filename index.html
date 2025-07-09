@@ -36,28 +36,18 @@
       border-radius: 50%;
       transition: transform 4s ease-out;
     }
-    function spinWheel() {
-  const randomAngle = Math.floor(Math.random() * 360);
-  const fullRotations = 5 * 360;
-  const totalRotation = fullRotations + randomAngle;
-
-  wheelCanvas.style.transition = "transform 4s ease-out";
-  wheelCanvas.style.transform = `rotate(${totalRotation}deg)`;
-
-  setTimeout(() => {
-    const finalAngle = (totalRotation % 360); // bucağın qalıq hissəsi
-    const angleUnderArrow = (360 - finalAngle) % 360; // oxun altına düşən real bucaq (0° yuxarı)
-    const index = Math.floor(angleUnderArrow / angleStep) % prizes.length;
-    const reward = prizes[index];
-
-    balance += reward;
-    spinCount++;
-    localStorage.setItem('balance', balance);
-    localStorage.setItem('spinCount', spinCount);
-    updateSpinText();
-    alert(`${reward.toFixed(6)} AZN qazandınız!`);
-  }, 4000);
-  }  #withdrawPopup {
+    #arrow {
+      width: 0;
+      height: 0;
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
+      border-left: 30px solid red; /* uc sola baxır */
+      position: absolute;
+      top: calc(50% - 10px);
+      left: 300px; /* sağ tərəfdə */
+      z-index: 10;
+    }
+    #withdrawPopup {
       position: fixed;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
@@ -168,7 +158,8 @@
       wheelCanvas.style.transform = `rotate(${totalRotation}deg)`;
 
       setTimeout(() => {
-        const finalAngle = (360 - (totalRotation % 360)) % 360; // Üst hissə = 0°
+        // Əqrəb sağda olduğuna görə baxılan bucaq 90°
+        const finalAngle = (90 - (totalRotation % 360) + 360) % 360;
         const index = Math.floor(finalAngle / angleStep) % prizes.length;
         const reward = prizes[index];
         balance += reward;
