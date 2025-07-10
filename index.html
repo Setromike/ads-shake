@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html lang="az">
+<!DOCTYPE html><html lang="az">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Konfet Çarxı</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Şanslı Çarx</title>
   <style>
     body {
       margin: 0;
@@ -41,164 +40,203 @@
       height: 0;
       border-left: 20px solid transparent;
       border-right: 20px solid transparent;
-      border-bottom: 40px solid red;
+      border-top: 30px solid red;
       position: absolute;
-      top: -40px;
+      top: -30px;
       left: calc(50% - 20px);
       z-index: 10;
       animation: blink 1s infinite;
     }
     @keyframes blink {
       0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
+      50% { opacity: 0.2; }
     }
-    #withdrawPopup {
+    #lights {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 300px;
+      height: 300px;
+      pointer-events: none;
+    }
+    .light {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: yellow;
+      position: absolute;
+      animation: blink 1s infinite alternate;
+      box-shadow: 0 0 10px yellow;
+    }
+    #popup, #invitePopup {
       position: fixed;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(255,240,245,0.95);
+      background: #fff0f5;
+      padding: 20px;
       border: 2px solid #ff69b4;
       border-radius: 20px;
-      padding: 20px;
       display: none;
+      font-size: 18px;
       z-index: 1000;
+      max-width: 90%;
     }
-    input[type=text] {
-      padding: 8px;
-      width: 80%;
-      margin: 10px 0;
+    #inviteList {
+      margin-top: 10px;
+      max-height: 100px;
+      overflow-y: auto;
+      font-size: 14px;
+      text-align: left;
     }
   </style>
 </head>
 <body>
-  <h2>Sadə Konfet Çarxı</h2>
+  <h2>\u015eansl\u0131 \u00c7arx</h2>
   <div id="wheelContainer">
-    <div id="arrow"></div>
     <canvas id="wheel" width="300" height="300"></canvas>
+    <div id="arrow"></div>
+    <div id="lights"></div>
   </div>
   <p id="spinCounter">0/50</p>
-  <button class="btn" onclick="showAdAndSpin()">Çarxı Fırlat</button>
-  <button class="btn" onclick="showWithdraw()">Çıxarış</button>
+  <p>Bonus spin: <span id="bonusCount">0</span></p>
+  <button class="btn" onclick="spinHandler()">Çarx Fırlat</button>
+  <button class="btn" onclick="showInvitePopup()">Dəvət et</button>
   <button class="btn" onclick="showBalance()">Balans</button>
-
-  <div id="withdrawPopup">
-    <p>Çıxarış üçün yöntəm yazıb göndərin:</p>
-    <input type="text" id="withdrawMethod" placeholder="Çıxarış yöntəmini yazın" />
-    <br>
-    <button class="btn" onclick="submitWithdraw()">GÖNDƏR</button>
-    <button class="btn" onclick="document.getElementById('withdrawPopup').style.display='none'">Bağla</button>
-  </div>
-
-  <script src='//libtl.com/sdk.js' data-zone='9532911' data-sdk='show_9532911'></script>
-  <script>
-    const wheelCanvas = document.getElementById("wheel");
-    const ctx = wheelCanvas.getContext("2d");
-    const prizes = [
-      0.0008, 0.001, 0.05, 0.09, 0.00002, 0.000009, 0.00006, 0.0003, 0.002, 0.1
-    ];
-    const labels = [
-      "0.0008 qəpik", "0.001 qəpik", "0.05 qəpik", "0.09 qəpik", "0.00002 qəpik",
-      "0.000009 qəpik", "0.00006 qəpik", "0.0003 qəpik", "0.002 qəpik", "0.1 qəpik"
-    ];
-    const colors = ["#f9c", "#fc9", "#9cf", "#cfc", "#ccf", "#ffc", "#f99", "#cff", "#fcc", "#cc9"];
+  <div id="popup"></div>
+  <div id="invitePopup"></div>  <script src="//libtl.com/sdk.js" data-zone="9532911" data-sdk="show_9532911"></script>  <script>
+    const prizes = [0.01, 0.05, 0.02, 0.1, 0.03, 0.005, 0.08, 0.06];
+    const colors = ["#ffc0cb", "#ffb6c1", "#ff69b4", "#ff1493", "#db7093", "#c71585", "#ff85b2", "#ffa6c9"];
     const angleStep = 360 / prizes.length;
-
     let spinCount = parseInt(localStorage.getItem('spinCount') || '0');
-    let lastReset = parseInt(localStorage.getItem('lastReset') || '0');
+    let bonusSpins = parseInt(localStorage.getItem('bonusSpins') || '2');
     let balance = parseFloat(localStorage.getItem('balance') || '0');
+    let referrals = JSON.parse(localStorage.getItem('referrals') || '[]');
+
+    const wheel = document.getElementById("wheel");
+    const ctx = wheel.getContext("2d");
 
     function drawWheel() {
       ctx.clearRect(0, 0, 300, 300);
       for (let i = 0; i < prizes.length; i++) {
+        const startAngle = i * 2 * Math.PI / prizes.length;
+        const endAngle = (i + 1) * 2 * Math.PI / prizes.length;
         ctx.beginPath();
         ctx.moveTo(150, 150);
         ctx.fillStyle = colors[i % colors.length];
-        ctx.arc(150, 150, 150, i * 2 * Math.PI / prizes.length, (i + 1) * 2 * Math.PI / prizes.length);
+        ctx.arc(150, 150, 150, startAngle, endAngle);
         ctx.fill();
+
         ctx.save();
         ctx.translate(150, 150);
-        ctx.rotate(i * 2 * Math.PI / prizes.length + Math.PI / prizes.length);
-        ctx.textAlign = "right";
+        ctx.rotate(startAngle + angleStep * Math.PI / 360);
         ctx.fillStyle = "#000";
-        ctx.font = "bold 14px Arial";
-        ctx.fillText(labels[i], 140, 5);
+        ctx.textAlign = "right";
+        ctx.font = "bold 12px Arial";
+        ctx.fillText("\u015eansl\u0131 \u00e7arx", 140, 5);
         ctx.restore();
       }
     }
 
-    drawWheel();
-    updateSpinText();
+    function createLights() {
+      const container = document.getElementById("lights");
+      for (let i = 0; i < 16; i++) {
+        const light = document.createElement("div");
+        light.classList.add("light");
+        const angle = i * (360 / 16);
+        const x = 150 + 140 * Math.cos(angle * Math.PI / 180) - 5;
+        const y = 150 + 140 * Math.sin(angle * Math.PI / 180) - 5;
+        light.style.left = `${x}px`;
+        light.style.top = `${y}px`;
+        container.appendChild(light);
+      }
+    }
 
-    function updateSpinText() {
+    function spinHandler() {
+      if (bonusSpins > 0) {
+        bonusSpins--;
+        localStorage.setItem('bonusSpins', bonusSpins);
+        updateUI();
+        spin();
+      } else {
+        show_9532911().then(() => spin());
+      }
+    }
+
+    function spin() {
+      const randomAngle = Math.floor(Math.random() * 360);
+      const totalRotation = 5 * 360 + randomAngle;
+      wheel.style.transition = "transform 4s ease-out";
+      wheel.style.transform = `rotate(${totalRotation}deg)`;
+
+      setTimeout(() => {
+        const finalAngle = (360 - (totalRotation % 360)) % 360;
+        const index = Math.floor((finalAngle + angleStep / 2) % 360 / angleStep);
+        const prize = prizes[index];
+        balance += prize;
+        spinCount++;
+        localStorage.setItem('spinCount', spinCount);
+        localStorage.setItem('balance', balance);
+        updateUI();
+        showPopup(`${prize.toFixed(3)} AZN qazand\u0131n!`);
+      }, 4000);
+    }
+
+    function showPopup(text) {
+      const popup = document.getElementById("popup");
+      popup.innerText = text;
+      popup.style.display = "block";
+      setTimeout(() => popup.style.display = "none", 3000);
+    }
+
+    function updateUI() {
       document.getElementById("spinCounter").innerText = `${spinCount}/50`;
-    }
-
-    function resetSpinIfNeeded() {
-      const now = Date.now();
-      if (now - lastReset > 86400000) {
-        spinCount = 0;
-        lastReset = now;
-        localStorage.setItem('spinCount', '0');
-        localStorage.setItem('lastReset', `${now}`);
-        updateSpinText();
-      }function spinWheel() {
-  const randomAngle = Math.floor(Math.random() * 360);
-  const fullRotations = 5 * 360;
-  const totalRotation = fullRotations + randomAngle;
-
-  wheelCanvas.style.transition = "transform 4s ease-out";
-  wheelCanvas.style.transform = `rotate(${totalRotation}deg)`;
-
-  setTimeout(() => {
-    const finalAngle = (180 - (totalRotation % 360) + 360) % 360; // ⬅️ Əqrəb ucu aşağıya baxır (180°)
-    const index = Math.floor(finalAngle / angleStep) % prizes.length;
-    const reward = prizes[index];
-    balance += reward;
-    spinCount++;
-    localStorage.setItem('balance', balance);
-    localStorage.setItem('spinCount', spinCount);
-    updateSpinText();
-    alert(`${reward.toFixed(6)} AZN qazandınız!`);
-  }, 4000);
-      }
-    }
-
-    function showAdAndSpin() {
-      resetSpinIfNeeded();
-      if (spinCount >= 50) {
-        alert("Günlük limit dolub. Zəhmət olmasa sabah yenidən yoxlayın.");
-        return;
-      }
-      show_9532911().then(() => {
-        spinWheel();
-      });
-    }
-
-    function spinWheel() {
-    
-
-    function showWithdraw() {
-      if (balance < 3.5) return alert("Minimum çıxarış məbləği 3.50 AZN-dir.");
-      document.getElementById("withdrawPopup").style.display = "block";
-    }
-
-    function submitWithdraw() {
-      const method = document.getElementById("withdrawMethod").value;
-      if (!method) return alert("Zəhmət olmasa çıxarış yöntəmini daxil edin.");
-      const tg = window.Telegram.WebApp.initDataUnsafe?.user;
-      const msg = `✉️ Çıxarış:%0A👤 ${tg?.first_name || 'Naməlum'}%0A🆔 ${tg?.id || 'Naməlum'}%0A💳 Yöntəm: ${method}%0A💰 Məbləğ: ${balance.toFixed(2)} AZN`;
-      fetch(`https://api.telegram.org/bot8133472449:AAHtl4g78JW2Jx5uw3Pxgn5TCXdVQTO9lMI/sendMessage?chat_id=8197921729&text=${msg}`)
-        .then(() => {
-          alert("Çıxarış göndərildi!");
-          balance = 0;
-          localStorage.setItem('balance', '0');
-          document.getElementById("withdrawPopup").style.display = "none";
-        });
+      document.getElementById("bonusCount").innerText = bonusSpins;
     }
 
     function showBalance() {
-      alert(`Balans: ${balance.toFixed(5)} AZN`);
+      alert(`Balans: ${balance.toFixed(2)} AZN`);
     }
+
+    function showInvitePopup() {
+      const tg = window.Telegram?.WebApp?.initDataUnsafe?.user || { id: '123456', username: 'namelum' };
+      const link = `https://t.me/adsOFmanat_bot?start=${tg.id}`;
+      const list = referrals.map((u, i) => `${i + 1}. ${u}`).join("\n") || "He\u00e7 kim d\u0259v\u0259t edilm\u0259yib.";
+      const html = `<p>H\u0259r d\u0259v\u0259t etdiyin dosta 2 spin qazanacaqsan!</p>
+        <p><b>D\u0259v\u0259t linkin:</b><br><button class='btn' onclick='copyLink()'>${link}</button></p>
+        <p><b>D\u0259v\u0259t etdiklərin:</b><br><pre>${list}</pre></p><button class='btn' onclick='closeInvitePopup()'>Ba\u011fla</button>`;
+  const invitePopup = document.getElementById("invitePopup");
+  invitePopup.innerHTML = html;
+  invitePopup.style.display = "block";
+}
+
+function closeInvitePopup() {
+  document.getElementById("invitePopup").style.display = "none";
+}
+
+function copyLink() {
+  const tg = window.Telegram?.WebApp?.initDataUnsafe?.user || { id: '123456' };
+  const link = `https://t.me/adsOFmanat_bot?start=${tg.id}`;
+  navigator.clipboard.writeText(link);
+  showPopup("Link kopyaland\u0131!");
+}
+
+// Referral check (simulate for now)
+const urlParams = new URLSearchParams(window.location.search);
+const ref = urlParams.get('start');
+const myId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+if (ref && ref !== myId) {
+  const refKey = `bonusFrom_${ref}`;
+  if (!localStorage.getItem(refKey)) {
+    fetch(`https://api.telegram.org/bot8133472449:AAHtl4g78JW2Jx5uw3Pxgn5TCXdVQTO9lMI/sendMessage?chat_id=${ref}&text=\u2b50 Yeni istifad\u0259\u00e7i sizi d\u0259v\u0259t etdi! Siz\u0259 2 spin verildi!`);
+    localStorage.setItem(refKey, 'given');
+    // Backend'de link sahibine 2 spin art\u0131r\u0131lmal\u0131d\u0131r
+  }
+}
+
+drawWheel();
+createLights();
+updateUI();
+
   </script>
 </body>
 </html>
