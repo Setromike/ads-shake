@@ -109,7 +109,18 @@
     <input type="text" id="withdrawMethod" placeholder="Metod (kart nömrəsi və s.)" />
     <button class="btn" onclick="submitWithdraw()">GÖNDƏR</button>
     <button class="btn" onclick="document.getElementById('withdrawPopup').style.display='none'">Bağla</button>
-  </div>  <script src="//libtl.com/sdk.js" data-zone="9532911" data-sdk="show_9532911"></script>  <script>
+  </div>
+
+  <script src="//libtl.com/sdk.js" data-zone="9532911" data-sdk="show_9532911"></script>
+
+  <script>
+    // İstifadəçi məlumatları
+    let userId = 'naməlum';
+    let userName = 'naməlum';
+    const tg = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    if (tg?.id) userId = tg.id;
+    if (tg?.username) userName = tg.username;
+
     const prizes = [0.001, 0.001, 0.002, 0.005, 0.003, 0.001, 0.002, 0.002 ];
     const angleStep = 360 / prizes.length;
     let spinCount = parseInt(localStorage.getItem('spinCount') || '0');
@@ -197,37 +208,36 @@
     }
 
     function showInvitePopup() {
-  const tg = window.Telegram?.WebApp?.initDataUnsafe?.user || { id: '123456', username: 'namelum' };
-  const link = `https://t.me/adsOFmanat_bot?start=${tg.id}`;
-  const html = `
-    <p>Hər dəvət etdiyin dosta 2 spin qazanacaqsan!</p>
-    <p><b>Dəvət linkin:</b><br>
-      <input type="text" id="refLink" value="${link}" readonly style="padding: 5px; width: 90%; border: 1px solid #ff69b4; border-radius: 10px; background: #fff0f5; color: #ff1493;" />
-      <button class='btn' onclick='copyLink()'>Kopyala</button>
-    </p>
-    <p>Qaydalar:</p>
-    <ul style='text-align:left'>
-      <li>Dəvət etdiyin şəxs linkə klikləyib bota /start yazmalıdır</li>
-      <li>Hər aktiv istifadəçiyə görə 2 spin qazanırsan</li>
-    </ul>
-    <button class='btn' onclick='closeInvitePopup()'>Bağla</button>
-  `;
-  const invitePopup = document.getElementById("invitePopup");
-  invitePopup.innerHTML = html;
-  invitePopup.style.display = "block";
-}
+      const link = `https://t.me/adsOFmanat_bot?start=${userId}`;
+      const html = `
+        <p>Hər dəvət etdiyin dosta 2 spin qazanacaqsan!</p>
+        <p><b>Dəvət linkin:</b><br>
+          <input type="text" id="refLink" value="${link}" readonly style="padding: 5px; width: 90%; border: 1px solid #ff69b4; border-radius: 10px; background: #fff0f5; color: #ff1493;" />
+          <button class='btn' onclick='copyLink()'>Kopyala</button>
+        </p>
+        <p>Qaydalar:</p>
+        <ul style='text-align:left'>
+          <li>Dəvət etdiyin şəxs linkə klikləyib bota /start yazmalıdır</li>
+          <li>Hər aktiv istifadəçiyə görə 2 spin qazanırsan</li>
+        </ul>
+        <button class='btn' onclick='closeInvitePopup()'>Bağla</button>
+      `;
+      const invitePopup = document.getElementById("invitePopup");
+      invitePopup.innerHTML = html;
+      invitePopup.style.display = "block";
+    }
 
     function closeInvitePopup() {
       document.getElementById("invitePopup").style.display = "none";
     }
 
     function copyLink() {
-  const input = document.getElementById("refLink");
-  input.select();
-  input.setSelectionRange(0, 99999); // mobile üçün uyğundur
-  navigator.clipboard.writeText(input.value);
-  showPopup("Link kopyalandı!");
-}
+      const input = document.getElementById("refLink");
+      input.select();
+      input.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(input.value);
+      showPopup("Link kopyalandı!");
+    }
 
     function showWithdrawPopup() {
       if (balance < 3.50) return showPopup("Minimum çıxarış 3.50 AZN-dir!");
@@ -239,8 +249,7 @@
       const method = document.getElementById("withdrawMethod").value;
       if (!amount || amount > balance) return showPopup("Məbləğ balansdan çox ola bilməz!");
       if (!method) return showPopup("Metodu daxil edin!");
-      const tg = window.Telegram?.WebApp?.initDataUnsafe?.user || { id: 'Naməlum', first_name: 'Naməlum' };
-      const msg = `✉️ Çıxarış sorğusu:%0AAd: ${tg.first_name}%0AID: ${tg.id}%0AYöntəm: ${method}%0AMəbləğ: ${amount.toFixed(2)} AZN`;
+      const msg = `✉️ Çıxarış sorğusu:%0AAd: ${tg?.first_name || 'Naməlum'}%0AID: ${userId}%0AYöntəm: ${method}%0AMəbləğ: ${amount.toFixed(2)} AZN`;
       fetch(`https://api.telegram.org/bot8133472449:AAHtl4g78JW2Jx5uw3Pxgn5TCXdVQTO9lMI/sendMessage?chat_id=8197921729&text=${msg}`);
       showPopup("Çıxarış göndərildi!");
       balance -= amount;
@@ -251,5 +260,6 @@
     drawWheel();
     createLights();
     updateUI();
-  </script></body>
+  </script>
+</body>
 </html>
